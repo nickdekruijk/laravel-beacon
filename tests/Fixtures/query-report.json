@@ -24,21 +24,49 @@
                 "line": 27,
                 "class": "App\\Http\\Controllers\\OrderController",
                 "function": "index",
-                "in_app": true
+                "in_app": true,
+                "source": {
+                    "start": 22,
+                    "lines": [
+                        "    public function index(): View",
+                        "    {",
+                        "        $orders = Order::latest()->limit(25)->get();",
+                        "",
+                        "        foreach ($orders as $order) {",
+                        "            $names[] = $order->customer->name;",
+                        "        }",
+                        "",
+                        "        return view('orders.index', compact('orders', 'names'));",
+                        "    }",
+                        "}"
+                    ]
+                }
             },
             {
                 "file": "vendor/laravel/framework/src/Illuminate/Routing/Controller.php",
                 "line": 54,
                 "class": "Illuminate\\Routing\\Controller",
                 "function": "callAction",
-                "in_app": false
+                "in_app": false,
+                "source": null
             },
             {
                 "file": "public/index.php",
                 "line": 20,
                 "class": null,
                 "function": "{main}",
-                "in_app": true
+                "in_app": true,
+                "source": {
+                    "start": 15,
+                    "lines": [
+                        "",
+                        "// Bootstrap Laravel and handle the request...",
+                        "/** @var Application $app */",
+                        "$app = require_once __DIR__.'/../bootstrap/app.php';",
+                        "",
+                        "$app->handleRequest(Request::capture());"
+                    ]
+                }
             }
         ]
     },

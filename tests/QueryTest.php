@@ -135,7 +135,8 @@ class QueryTest extends TestCase
 
         $this->assertSame('app/OrderList.php', $query['file']);
         $this->assertSame(10, $query['line']);
-        $this->assertSame(['file' => 'app/OrderList.php', 'line' => 10, 'class' => 'App\OrderList', 'function' => 'customers', 'in_app' => true], $query['frames'][0]);
+        $this->assertSame(['file' => 'app/OrderList.php', 'line' => 10, 'class' => 'App\OrderList', 'function' => 'customers', 'in_app' => true], array_diff_key($query['frames'][0], ['source' => true]));
+        $this->assertStringContainsString('QueryTest::runQuery(', $query['frames'][0]['source']['lines'][10 - $query['frames'][0]['source']['start']]);
         $this->assertSame('{main}', $query['frames'][array_key_last($query['frames'])]['function']);
     }
 

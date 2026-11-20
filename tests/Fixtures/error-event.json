@@ -23,21 +23,49 @@
                 "line": 42,
                 "class": "App\\Http\\Controllers\\OrderController",
                 "function": "store",
-                "in_app": true
+                "in_app": true,
+                "source": {
+                    "start": 37,
+                    "lines": [
+                        "    public function store(StoreOrderRequest $request): RedirectResponse",
+                        "    {",
+                        "        $input = $request->validated();",
+                        "",
+                        "        $order = Order::create([",
+                        "            'customer' => $input['name'],",
+                        "            'quantity' => $input['quantity'],",
+                        "        ]);",
+                        "",
+                        "        return to_route('orders.show', $order);",
+                        "    }"
+                    ]
+                }
             },
             {
                 "file": "vendor/laravel/framework/src/Illuminate/Routing/Controller.php",
                 "line": 54,
                 "class": "Illuminate\\Routing\\Controller",
                 "function": "callAction",
-                "in_app": false
+                "in_app": false,
+                "source": null
             },
             {
                 "file": "public/index.php",
                 "line": 20,
                 "class": null,
                 "function": "{main}",
-                "in_app": true
+                "in_app": true,
+                "source": {
+                    "start": 15,
+                    "lines": [
+                        "",
+                        "// Bootstrap Laravel and handle the request...",
+                        "/** @var Application $app */",
+                        "$app = require_once __DIR__.'/../bootstrap/app.php';",
+                        "",
+                        "$app->handleRequest(Request::capture());"
+                    ]
+                }
             }
         ]
     },

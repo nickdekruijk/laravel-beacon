@@ -18,7 +18,8 @@ use Throwable;
  * comes later. Arguments of the calls in the stack trace are never read: they hold whatever the
  * application had in its hands.
  *
- * @phpstan-type Frame array{file: ?string, line: ?int, class: ?string, function: ?string, in_app: bool}
+ * @phpstan-type Source array{start: int, lines: list<string>}
+ * @phpstan-type Frame array{file: ?string, line: ?int, class: ?string, function: ?string, in_app: bool, source: ?Source}
  */
 class Collector
 {
@@ -41,6 +42,24 @@ class Collector
     private const BACKTRACE_LIMIT = 120;
 
     private const QUERY_FRAME_LIMIT = 50;
+
+    /**
+     * The lines of code around a frame of the site's own code: this many before and after the
+     * line itself, each cut to a length, and for this many frames from the top. Below that the
+     * trace is the framework calling in, and the code adds nothing.
+     */
+    private const SOURCE_CONTEXT = 5;
+
+    private const SOURCE_LINE_LIMIT = 300;
+
+    private const SOURCE_FRAME_LIMIT = 10;
+
+    /**
+     * The lines of a file, by its path, read once per report.
+     *
+     * @var array<string, list<string>|null>
+     */
+    private array $fileLines = [];
 
     /**
      * The request part may be this many bytes as JSON. Above it the body goes, then the rest.
@@ -246,17 +265,64 @@ class Collector
     private function framesFrom(?string $file, ?int $line, array $trace): array
     {
         $frames = [];
+        $places = [];
 
         foreach ($trace as $call) {
             $frames[] = $this->frame($file, $line, $call['class'] ?? null, $call['function'] ?? null);
+            $places[] = $file;
 
             $file = $call['file'] ?? null;
             $line = $call['line'] ?? null;
         }
 
         $frames[] = $this->frame($file, $line, null, '{main}');
+        $places[] = $file;
+
+        $withSource = 0;
+
+        foreach ($frames as $index => $frame) {
+            if ($frame['in_app'] && $withSource < self::SOURCE_FRAME_LIMIT) {
+                $frames[$index]['source'] = $this->source($places[$index], $frame['line']);
+                $withSource += $frames[$index]['source'] === null ? 0 : 1;
+            }
+        }
 
         return $frames;
+    }
+
+    /**
+     * The code around a line, read from the file as it is on the site now. Not for a compiled
+     * view: its line number is that of the compiled file, which is not the Blade file the frame
+     * names. Nothing when the file cannot be read.
+     *
+     * @return Source|null
+     */
+    private function source(?string $file, ?int $line): ?array
+    {
+        $compiled = rtrim((string) $this->config('view.compiled'), '/');
+
+        if ($file === null || $line === null || $line < 1 || ($compiled !== '' && str_starts_with($file, $compiled.'/'))) {
+            return null;
+        }
+
+        if (! array_key_exists($file, $this->fileLines)) {
+            $contents = is_file($file) && is_readable($file) ? @file($file, FILE_IGNORE_NEW_LINES) : false;
+            $this->fileLines[$file] = $contents === false ? null : $contents;
+        }
+
+        $lines = $this->fileLines[$file];
+
+        if ($lines === null || $line > count($lines)) {
+            return null;
+        }
+
+        $start = max(1, $line - self::SOURCE_CONTEXT);
+        $slice = array_slice($lines, $start - 1, min($line + self::SOURCE_CONTEXT, count($lines)) - $start + 1);
+
+        return [
+            'start' => $start,
+            'lines' => array_map(fn (string $code) => $this->scrubber->cut(rtrim($code), self::SOURCE_LINE_LIMIT), $slice),
+        ];
     }
 
     /**
@@ -278,6 +344,7 @@ class Collector
             'class' => $this->cut($class, 255),
             'function' => $this->cut($function, 255),
             'in_app' => $inApp,
+            'source' => null,
         ];
     }
 

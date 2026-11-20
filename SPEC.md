@@ -55,21 +55,49 @@ The package never waits longer than `beacon.timeout` seconds (2 by default) and 
                 "line": 42,
                 "class": "App\\Http\\Controllers\\OrderController",
                 "function": "store",
-                "in_app": true
+                "in_app": true,
+                "source": {
+                    "start": 37,
+                    "lines": [
+                        "    public function store(StoreOrderRequest $request): RedirectResponse",
+                        "    {",
+                        "        $input = $request->validated();",
+                        "",
+                        "        $order = Order::create([",
+                        "            'customer' => $input['name'],",
+                        "            'quantity' => $input['quantity'],",
+                        "        ]);",
+                        "",
+                        "        return to_route('orders.show', $order);",
+                        "    }"
+                    ]
+                }
             },
             {
                 "file": "vendor/laravel/framework/src/Illuminate/Routing/Controller.php",
                 "line": 54,
                 "class": "Illuminate\\Routing\\Controller",
                 "function": "callAction",
-                "in_app": false
+                "in_app": false,
+                "source": null
             },
             {
                 "file": "public/index.php",
                 "line": 20,
                 "class": null,
                 "function": "{main}",
-                "in_app": true
+                "in_app": true,
+                "source": {
+                    "start": 15,
+                    "lines": [
+                        "",
+                        "// Bootstrap Laravel and handle the request...",
+                        "/** @var Application $app */",
+                        "$app = require_once __DIR__.'/../bootstrap/app.php';",
+                        "",
+                        "$app->handleRequest(Request::capture());"
+                    ]
+                }
             }
         ]
     },
@@ -151,12 +179,15 @@ A frame:
 | `class` | string or `null` | 255 | The class of the function that was running there. |
 | `function` | string or `null` | 255 | The function that was running there. `{main}` for the last frame. |
 | `in_app` | boolean | | Whether this is the site's own code: inside the site and not in `vendor/`. |
+| `source` | object or `null` | | The code around `line`, for a frame of the site's own code: `start` is the number of the first line, `lines` the lines from there, 5 before and 5 after, each cut at 300 characters. `null` for other frames, for a compiled view, and when the file cannot be read. |
 
 Frames run from where the exception was thrown outwards. Each frame is a place plus the function that was executing at that place, which is not how PHP's `getTrace()` gives them (there each entry is a call plus the place it was called from).
 
 A frame in a compiled Blade view is sent as the Blade file it was compiled from, with the line number of the compiled file. A compiled view that cannot be traced back keeps its own path and gets `in_app: false`: its name is a hash that differs per release.
 
 Since PHP 8.4 a closure is named after its line, such as `{closure:App\Foo::bar():12}`. A dashboard that groups on the function should strip that number.
+
+Only the first 10 frames of the site's own code get their `source`. It is read from the file as it is on the site when the report is made, so after a deploy it can differ from the code that ran. A secret written in the code itself goes along with it.
 
 Arguments of the calls in the trace are never sent.
 
@@ -216,21 +247,49 @@ Only sent by a site that has `BEACON_QUERIES` on. It goes to the same URL and ge
                 "line": 27,
                 "class": "App\\Http\\Controllers\\OrderController",
                 "function": "index",
-                "in_app": true
+                "in_app": true,
+                "source": {
+                    "start": 22,
+                    "lines": [
+                        "    public function index(): View",
+                        "    {",
+                        "        $orders = Order::latest()->limit(25)->get();",
+                        "",
+                        "        foreach ($orders as $order) {",
+                        "            $names[] = $order->customer->name;",
+                        "        }",
+                        "",
+                        "        return view('orders.index', compact('orders', 'names'));",
+                        "    }",
+                        "}"
+                    ]
+                }
             },
             {
                 "file": "vendor/laravel/framework/src/Illuminate/Routing/Controller.php",
                 "line": 54,
                 "class": "Illuminate\\Routing\\Controller",
                 "function": "callAction",
-                "in_app": false
+                "in_app": false,
+                "source": null
             },
             {
                 "file": "public/index.php",
                 "line": 20,
                 "class": null,
                 "function": "{main}",
-                "in_app": true
+                "in_app": true,
+                "source": {
+                    "start": 15,
+                    "lines": [
+                        "",
+                        "// Bootstrap Laravel and handle the request...",
+                        "/** @var Application $app */",
+                        "$app = require_once __DIR__.'/../bootstrap/app.php';",
+                        "",
+                        "$app->handleRequest(Request::capture());"
+                    ]
+                }
             }
         ]
     },

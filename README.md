@@ -29,7 +29,7 @@ It hooks into Laravel's exception handler. Whatever Laravel reports, Beacon post
 
 ### What it sends
 
-The class and message of the exception, the stack trace with paths relative to the site, what the application was doing (the route, the command or the queued job, the id of the user) and the request it happened in.
+The class and message of the exception, the stack trace with paths relative to the site and the lines of code around each frame of your own code, what the application was doing (the route, the command or the queued job, the id of the user) and the request it happened in.
 
 The request is scrubbed before it leaves the site:
 

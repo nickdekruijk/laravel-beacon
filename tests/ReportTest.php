@@ -93,6 +93,47 @@ class ReportTest extends TestCase
         $this->assertSame('{main}', $frames[array_key_last($frames)]['function']);
     }
 
+    public function test_a_frame_of_the_site_its_own_code_has_the_lines_around_it(): void
+    {
+        $frame = $this->report($this->thrownBy('app/Thrower.php'))['exception']['frames'][0];
+
+        $this->assertSame(['start' => 1, 'lines' => [
+            '<?php',
+            '',
+            'return function (): never {',
+            "    throw new RuntimeException('Thrown inside the site');",
+            '};',
+        ]], $frame['source']);
+    }
+
+    public function test_a_frame_in_the_middle_of_a_file_gets_five_lines_on_either_side_cut_to_their_limit(): void
+    {
+        $lines = array_map(fn (int $number) => "// line {$number}", range(1, 30));
+        $lines[11] = 'return function (): void { throw new LogicException(\'Line twelve\'); };';
+        $lines[13] = '// '.str_repeat('x', 400);
+        File::ensureDirectoryExists(base_path('app'));
+        File::put(base_path('app/Thrower.php'), "<?php\n".implode("\n", array_slice($lines, 1))."\n");
+
+        try {
+            (require base_path('app/Thrower.php'))();
+        } catch (LogicException $exception) {
+            $source = $this->report($exception)['exception']['frames'][0]['source'];
+        }
+
+        $this->assertSame(7, $source['start']);
+        $this->assertCount(11, $source['lines']);
+        $this->assertSame("return function (): void { throw new LogicException('Line twelve'); };", $source['lines'][5]);
+        $this->assertSame(300, mb_strlen($source['lines'][7]));
+    }
+
+    public function test_code_outside_the_site_and_in_vendor_has_no_source(): void
+    {
+        $frames = $this->report($this->thrownBy('vendor/acme/Thrower.php'))['exception']['frames'];
+
+        $this->assertNull($frames[0]['source'], 'vendor');
+        $this->assertNull($frames[1]['source'], 'This test file is outside the site');
+    }
+
     public function test_code_in_vendor_and_outside_the_site_is_not_the_site_its_own(): void
     {
         $frames = $this->report($this->thrownBy('vendor/acme/Thrower.php'))['exception']['frames'];
@@ -116,6 +157,7 @@ class ReportTest extends TestCase
         $this->assertSame('resources/views/broken.blade.php', $report['exception']['file']);
         $this->assertSame('resources/views/broken.blade.php', $report['exception']['frames'][0]['file']);
         $this->assertTrue($report['exception']['frames'][0]['in_app']);
+        $this->assertNull($report['exception']['frames'][0]['source'], 'Its line is that of the compiled file');
     }
 
     public function test_the_arguments_of_a_call_never_leave_the_site(): void
