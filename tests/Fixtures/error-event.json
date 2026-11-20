@@ -1,0 +1,71 @@
+{
+    "v": 1,
+    "type": "error",
+    "occurred_at": "2026-11-19T10:15:30+00:00",
+    "site": {
+        "path": "/home/forge/voorbeeld.test",
+        "host": "voorbeeld.test",
+        "environment": "production",
+        "php": "8.4.14",
+        "laravel": "13.1.0",
+        "beacon": "1.0.0"
+    },
+    "exception": {
+        "class": "ErrorException",
+        "message": "Undefined array key \"name\"",
+        "code": "0",
+        "file": "app/Http/Controllers/OrderController.php",
+        "line": 42,
+        "previous": [],
+        "frames": [
+            {
+                "file": "app/Http/Controllers/OrderController.php",
+                "line": 42,
+                "class": "App\\Http\\Controllers\\OrderController",
+                "function": "store",
+                "in_app": true
+            },
+            {
+                "file": "vendor/laravel/framework/src/Illuminate/Routing/Controller.php",
+                "line": 54,
+                "class": "Illuminate\\Routing\\Controller",
+                "function": "callAction",
+                "in_app": false
+            },
+            {
+                "file": "public/index.php",
+                "line": 20,
+                "class": null,
+                "function": "{main}",
+                "in_app": true
+            }
+        ]
+    },
+    "context": {
+        "type": "http",
+        "method": "POST",
+        "url": "https://voorbeeld.test/orders",
+        "route": "orders.store",
+        "command": null,
+        "job": null,
+        "user_id": "12"
+    },
+    "request": {
+        "query": {
+            "ref": "mail"
+        },
+        "body": {
+            "name": "Jan Voorbeeld",
+            "quantity": "2",
+            "password": "[Filtered]"
+        },
+        "headers": {
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+            "referer": "https://voorbeeld.test/cart",
+            "content-type": "application/x-www-form-urlencoded"
+        },
+        "ip": "203.0.113.0",
+        "livewire": null,
+        "truncated": false
+    }
+}

@@ -1,0 +1,48 @@
+{
+    "name": "nickdekruijk/laravel-beacon",
+    "description": "Reports the exceptions of a Laravel site to your own dashboard, without a key: scrubbed request data, no third party",
+    "license": "MIT",
+    "keywords": ["laravel", "exceptions", "error tracking", "monitoring", "self-hosted", "privacy"],
+    "authors": [{
+        "name": "Nick de Kruijk",
+        "email": "git@nickdekruijk.nl"
+    }],
+    "require": {
+        "php": "^8.2",
+        "guzzlehttp/guzzle": "^7.8",
+        "illuminate/http": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^10.0|^11.0",
+        "phpunit/phpunit": "^11.0|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "NickDeKruijk\\Beacon\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "NickDeKruijk\\Beacon\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "types:check": "phpstan analyse --memory-limit=1G"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "NickDeKruijk\\Beacon\\ServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

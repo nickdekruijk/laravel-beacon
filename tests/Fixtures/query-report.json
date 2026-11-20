@@ -1,0 +1,54 @@
+{
+    "v": 1,
+    "type": "query",
+    "occurred_at": "2026-11-20T10:15:30+00:00",
+    "site": {
+        "path": "/home/forge/voorbeeld.test",
+        "host": "voorbeeld.test",
+        "environment": "production",
+        "php": "8.4.14",
+        "laravel": "13.1.0",
+        "beacon": "1.0.0"
+    },
+    "query": {
+        "kind": "repeated",
+        "sql": "select * from `customers` where `customers`.`id` = ? limit ?",
+        "connection": "mysql",
+        "duration_ms": 41.3,
+        "count": 25,
+        "file": "app/Http/Controllers/OrderController.php",
+        "line": 27,
+        "frames": [
+            {
+                "file": "app/Http/Controllers/OrderController.php",
+                "line": 27,
+                "class": "App\\Http\\Controllers\\OrderController",
+                "function": "index",
+                "in_app": true
+            },
+            {
+                "file": "vendor/laravel/framework/src/Illuminate/Routing/Controller.php",
+                "line": 54,
+                "class": "Illuminate\\Routing\\Controller",
+                "function": "callAction",
+                "in_app": false
+            },
+            {
+                "file": "public/index.php",
+                "line": 20,
+                "class": null,
+                "function": "{main}",
+                "in_app": true
+            }
+        ]
+    },
+    "context": {
+        "type": "http",
+        "method": "GET",
+        "url": "https://voorbeeld.test/orders",
+        "route": "orders.index",
+        "command": null,
+        "job": null,
+        "user_id": "12"
+    }
+}
