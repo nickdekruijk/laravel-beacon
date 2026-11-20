@@ -45,6 +45,10 @@ class ServiceProvider extends BaseServiceProvider
             __DIR__.'/../config/beacon.php' => config_path('beacon.php'),
         ], 'beacon-config');
 
+        if ($this->app->runningInConsole()) {
+            $this->commands([TestCommand::class]);
+        }
+
         if ($this->reports()) {
             $this->followContext($this->app->make('events'));
 

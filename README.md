@@ -12,6 +12,12 @@ composer require nickdekruijk/laravel-beacon
 
 It needs Laravel 12 or later.
 
+To see that the dashboard takes the reports of the site, send a test exception. It works in every environment and also with `BEACON_ENABLED=false`, and it says what the dashboard answered:
+
+```
+php artisan beacon:test
+```
+
 ## What it does
 
 It hooks into Laravel's exception handler. Whatever Laravel reports, Beacon posts as JSON: no 404s, no validation errors, nothing from `dontReport()`. The exception is still logged as before, and other reporters still get it.

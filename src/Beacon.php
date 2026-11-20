@@ -60,6 +60,14 @@ class Beacon
     }
 
     /**
+     * Whether the application takes its reports itself.
+     */
+    public static function hasTransport(): bool
+    {
+        return self::$transport !== null;
+    }
+
+    /**
      * Hand a report to the transport of the application, or else to the sender.
      *
      * @param  array<string, mixed>  $report

@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Beacon;
 
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Throwable;
@@ -83,14 +84,7 @@ class Sender
                 return;
             }
 
-            $timeout = max(1, (int) $this->config('timeout', 2));
-            $token = $this->config('token');
-
-            $response = Http::timeout($timeout)
-                ->connectTimeout($timeout)
-                ->acceptJson()
-                ->when(is_string($token) && $token !== '', fn ($request) => $request->withToken($token))
-                ->post($url, $report);
+            $response = $this->request($url, $report);
 
             // Not let in: the dashboard has said what it thinks, so stop asking for an hour.
             if ($response->status() === 403) {
@@ -105,6 +99,33 @@ class Sender
         } catch (Throwable) {
             // The exception itself is in the log of the site. This one helps nobody.
         }
+    }
+
+    /**
+     * Post one report now, past the limits, and hand back what the dashboard answered. For
+     * `beacon:test`, which must say what happened. Unlike everything else here it throws: a
+     * dashboard that cannot be reached is the answer the command gives.
+     *
+     * @param  array<string, mixed>  $report
+     */
+    public function sendNow(array $report): Response
+    {
+        return $this->request((string) $this->config('url'), $report);
+    }
+
+    /**
+     * @param  array<string, mixed>  $report
+     */
+    private function request(string $url, array $report): Response
+    {
+        $timeout = max(1, (int) $this->config('timeout', 2));
+        $token = $this->config('token');
+
+        return Http::timeout($timeout)
+            ->connectTimeout($timeout)
+            ->acceptJson()
+            ->when(is_string($token) && $token !== '', fn ($request) => $request->withToken($token))
+            ->post($url, $report);
     }
 
     private function silenced(): bool
