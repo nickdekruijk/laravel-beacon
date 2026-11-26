@@ -24,6 +24,7 @@ class ServiceProvider extends BaseServiceProvider
         $this->app->singleton(Context::class);
         $this->app->singleton(Sender::class);
         $this->app->singleton(Collector::class);
+        $this->app->singleton(CspReports::class);
         $this->app->singleton(Beacon::class);
 
         $this->app->singleton(Scrubber::class, fn () => new Scrubber(
@@ -48,6 +49,10 @@ class ServiceProvider extends BaseServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([TestCommand::class]);
         }
+
+        // Also where nothing is reported, so a policy that names it never gets a 404. The
+        // controller sends nothing there.
+        $this->loadRoutesFrom(__DIR__.'/../routes/csp.php');
 
         if ($this->reports()) {
             $this->followContext($this->app->make('events'));
@@ -110,7 +115,6 @@ class ServiceProvider extends BaseServiceProvider
 
     private function reports(): bool
     {
-        return (bool) config('beacon.enabled', true)
-            && $this->app->environment((array) config('beacon.environments', ['production']));
+        return Beacon::isActive();
     }
 }

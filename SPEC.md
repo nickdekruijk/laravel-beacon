@@ -335,6 +335,73 @@ What the package limits itself:
 - A command does not report `repeated` queries: the same query a thousand times is what an import is for. It does report `slow` ones.
 - A `repeated` query is sent when the request or the job ends, a `slow` one like an exception: after the response, or at once in a command or a job.
 
+## The report of a CSP violation
+
+A browser that finds a violation of the Content-Security-Policy of a page posts a report to the site itself, to `beacon/csp` (`Beacon::cspReportUri()`): both as `report-uri` does it (`Content-Type: application/csp-report`, one object under `csp-report`) and as `report-to` does it (`application/reports+json`, a list of which the items of `type` `csp-violation` count). The site answers every post with a `204`, also one it refuses, and sends what it keeps on as a report of its own, with `type` `"csp"`, to `BEACON_URL`, the same as an exception. The browser never talks to the dashboard.
+
+The example is `tests/Fixtures/csp-report.json`:
+
+```json
+{
+    "v": 1,
+    "type": "csp",
+    "occurred_at": "2026-11-26T10:15:00+01:00",
+    "site": {
+        "path": "/home/forge/voorbeeld.test",
+        "host": "voorbeeld.test",
+        "environment": "production",
+        "php": "8.5.12",
+        "laravel": "13.42.0",
+        "beacon": "1.3.0"
+    },
+    "csp": {
+        "directive": "script-src-elem",
+        "blocked_uri": "https://cdn.voorbeeld-tracker.test/pixel.js",
+        "document_uri": "https://voorbeeld.test/orders",
+        "referrer": "https://www.google.com/",
+        "disposition": "report",
+        "source_file": "https://voorbeeld.test/orders",
+        "line": 12,
+        "column": 7,
+        "sample": null,
+        "status_code": 200,
+        "count": 3,
+        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15"
+    }
+}
+```
+
+`v`, `occurred_at` and `site` are those of the report of an exception. There is no `context` and no `request`: what there is to know about the page is in `csp`.
+
+### `csp`
+
+| Field | Type | Limit | Meaning |
+|---|---|---|---|
+| `directive` | string | 100 | The directive that was violated, as the browser names it: `effective-directive`, or the first word of `violated-directive` in a browser that sends only that. Never empty. |
+| `blocked_uri` | string or `null` | 2000 | What was blocked. A URL without its query string and fragment, `inline`, `eval`, or only the scheme of a `data:`, `blob:` or `filesystem:` URL. |
+| `document_uri` | string | 2000 | The page, without its query string and fragment. Always of the site itself. |
+| `referrer` | string or `null` | 2000 | Where the visitor came from, without its query string and fragment. |
+| `disposition` | string | | `enforce`: the browser blocked it. `report`: a report-only policy, the browser let it through. |
+| `source_file` | string or `null` | 2000 | The script or page the violation was in, scrubbed as `document_uri`. |
+| `line` | integer or `null` | | The line in `source_file`. |
+| `column` | integer or `null` | | The column on that line. |
+| `sample` | string or `null` | 100 | The first characters of the inline script or style, when the policy asks for them with `'report-sample'`. |
+| `status_code` | integer or `null` | | The HTTP status of the page. |
+| `count` | integer | | How often the site saw this violation since it last sent it, this time included. |
+| `user_agent` | string or `null` | 300 | The browser that reported it. |
+
+A path segment of 24 or more letters, digits, `-` or `_` is sent as `{token}` in `document_uri`, `referrer`, `blocked_uri` and `source_file`, as in a link to reset a password. The rest of the original report (`original-policy` and the like) is not sent.
+
+What the package leaves out or limits itself:
+
+- **Noise.** A violation is not sent when `blocked_uri`, `source_file` or `document_uri` has the scheme of a browser extension or of the browser itself (`chrome-extension`, `moz-extension`, `safari-extension`, `safari-web-extension`, `ms-browser-extension`, `webkit-masked-url`, `chrome`, `resource`, `about`, `android-webview-video-poster`), nor when the page is not on the host the report was posted to: a translation proxy shows the page of the site under its own address.
+- **The same violation** (by `directive`, `blocked_uri`, the path of `document_uri` and `disposition`) is sent once per `beacon.csp.every` seconds, an hour by default. The ones in between are counted, and that number goes along as `count` with the next one that is sent. A dashboard therefore counts with `count`, not with reports.
+- **Per address** of a visitor, at most 30 posts per minute are read, and per post at most 10 violations. A body larger than 32 KB is not read.
+- **Per minute** at most `beacon.csp.per_minute` CSP reports (10 by default) leave the site, apart from the exceptions and the queries.
+- Without a working cache nothing is sent: a flood of reports is worse than none.
+
+Outside `beacon.environments`, or with `BEACON_CSP=false`, the route still answers `204`, so a policy that names it never gets a `404`, but nothing is sent, and `Beacon::cspReportUri()` is `null`.
+
 ## What never leaves the site
 
 Scrubbing happens in the package, before anything is sent. A dashboard does well to apply the same rules again, for a site that runs an older version.
@@ -345,6 +412,7 @@ Scrubbing happens in the package, before anything is sent. A dashboard does well
 - **Headers.** Only `user-agent`, `referer`, `accept`, `accept-language`, `content-type`, `x-requested-with` and `x-livewire`, each cut at 500 characters. `Cookie`, `Authorization` and every other header are never sent, whatever the configuration.
 - **Addresses.** By default the address of the visitor has its last part set to zero: an IPv4 address keeps its first three numbers, an IPv6 address its first 48 bits.
 - **Messages.** In an exception message and in a header value, `name=value` is sent as `name=[Filtered]` when the name contains one of the secret field names: a URL with a token in it often ends up in a message.
+- **CSP reports.** The query string and the fragment of every URL, a path segment that looks like a token, and the rest of what the browser sent about its policy.
 - **Queries.** A `QueryException` is sent with its SQL and placeholders, not with the values that were bound. The report of a query has its placeholders too, and a value that was written into the query itself is replaced by one.
 - **Never, whatever is configured:** cookies, the session, the contents of a file, arguments of calls in the stack trace, arguments of a command, the name or e-mail address of the user.
 

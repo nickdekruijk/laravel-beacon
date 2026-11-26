@@ -1,0 +1,27 @@
+{
+    "v": 1,
+    "type": "csp",
+    "occurred_at": "2026-11-26T10:15:00+01:00",
+    "site": {
+        "path": "/home/forge/voorbeeld.test",
+        "host": "voorbeeld.test",
+        "environment": "production",
+        "php": "8.5.12",
+        "laravel": "13.42.0",
+        "beacon": "1.3.0"
+    },
+    "csp": {
+        "directive": "script-src-elem",
+        "blocked_uri": "https://cdn.voorbeeld-tracker.test/pixel.js",
+        "document_uri": "https://voorbeeld.test/orders",
+        "referrer": "https://www.google.com/",
+        "disposition": "report",
+        "source_file": "https://voorbeeld.test/orders",
+        "line": 12,
+        "column": 7,
+        "sample": null,
+        "status_code": 200,
+        "count": 3,
+        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15"
+    }
+}

@@ -5,6 +5,19 @@ All notable changes to `nickdekruijk/laravel-beacon` are documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-11-26
+
+### Added
+
+- Content-Security-Policy reports: browsers post them to `POST /beacon/csp` on the site itself, in the format of `report-uri` and of `report-to`, and the site sends them on to the dashboard as a report of `type` `csp`, after the response. Always a `204`, no CSRF or session, at most 30 posts per minute per address and 32 KB per post.
+- Left out: violations caused by browser extensions or the browser itself, and pages that are not of the site. Query strings, fragments and path segments that look like a token are taken out of every URL.
+- The same violation on the same page is sent once an hour, with the number of times it was seen since, and at most 10 CSP reports a minute, apart from the exceptions.
+- `Beacon::cspReportUri()` for the `report-uri` and `Reporting-Endpoints` of a policy: null where nothing is reported. `BEACON_CSP=false` switches it off.
+
+### Changed
+
+- The limit per minute follows the clock of the application, so a test that travels in time is counted the same way.
+
 ## [1.2.0] - 2026-11-20
 
 ### Added

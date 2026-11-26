@@ -60,6 +60,25 @@ class Beacon
     }
 
     /**
+     * Whether this site reports: Beacon is on, and the environment is one it reports in.
+     */
+    public static function isActive(): bool
+    {
+        return (bool) config('beacon.enabled', true)
+            && app()->environment((array) config('beacon.environments', ['production']));
+    }
+
+    /**
+     * Where the browser should send its Content-Security-Policy reports: the `report-uri` and
+     * `Reporting-Endpoints` of the policy. Null where nothing would be sent, locally for one,
+     * so the site can leave the reporting out of its policy there.
+     */
+    public static function cspReportUri(): ?string
+    {
+        return self::isActive() && (bool) config('beacon.csp.enabled', true) ? route('beacon.csp') : null;
+    }
+
+    /**
      * Whether the application takes its reports itself.
      */
     public static function hasTransport(): bool

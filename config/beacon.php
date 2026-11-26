@@ -114,4 +114,27 @@ return [
         'per_minute' => 5,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Content-Security-Policy reports
+    |--------------------------------------------------------------------------
+    |
+    | Browsers post their CSP reports to this path on the site itself, and the
+    | site sends them on to the dashboard. Point the policy at it with
+    | Beacon::cspReportUri(), which is null where nothing is reported.
+    |
+    | Reports of browser extensions and of pages that are not of this site are
+    | left out. The same violation on the same page is sent once per "every"
+    | seconds, with the number of times it was seen since, and at most this many
+    | CSP reports leave the site per minute, apart from the exceptions.
+    |
+    */
+
+    'csp' => [
+        'enabled' => env('BEACON_CSP', true),
+        'path' => 'beacon/csp',
+        'every' => 3600,
+        'per_minute' => 10,
+    ],
+
 ];

@@ -80,7 +80,7 @@ class Sender
         try {
             $url = (string) $this->config('url');
 
-            if ($url === '' || $this->silenced() || $this->overLimit(($report['type'] ?? null) === 'query')) {
+            if ($url === '' || $this->silenced() || $this->overLimit((string) ($report['type'] ?? 'error'))) {
                 return;
             }
 
@@ -147,21 +147,27 @@ class Sender
     }
 
     /**
-     * Whether this minute has had its number of reports. Queries have a number of their own, so
-     * a page full of them never uses up what the exceptions may send. A cache that is broken
-     * counts as no for an exception, as it may well be what the report is about, and as yes for
-     * a query, which can wait.
+     * Whether this minute has had its number of reports of this type. Queries and CSP reports
+     * have a number of their own, so a page full of them never uses up what the exceptions may
+     * send. A cache that is broken counts as no for an exception, as it may well be what the
+     * report is about, and as yes for the rest, which can wait.
      */
-    private function overLimit(bool $query): bool
+    private function overLimit(string $type): bool
     {
+        [$prefix, $limit] = match ($type) {
+            'query' => ['queries:', (int) $this->config('queries.per_minute', 5)],
+            'csp' => ['csp:', (int) $this->config('csp.per_minute', 10)],
+            default => ['', (int) $this->config('per_minute', 20)],
+        };
+
         try {
-            $key = 'beacon:sent:'.($query ? 'queries:' : '').intdiv(time(), 60);
+            $key = 'beacon:sent:'.$prefix.intdiv(now()->getTimestamp(), 60);
 
             Cache::add($key, 0, 120);
 
-            return Cache::increment($key) > (int) $this->config($query ? 'queries.per_minute' : 'per_minute', $query ? 5 : 20);
+            return Cache::increment($key) > $limit;
         } catch (Throwable) {
-            return $query;
+            return $type !== 'error';
         }
     }
 

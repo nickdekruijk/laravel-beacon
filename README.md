@@ -56,6 +56,23 @@ The report has the query with its placeholders, never its values, how long it to
 
 Watching costs next to nothing: a query is counted by its text, and the stack trace is only taken for a query that is going to be reported. Switch it on for one site first to see how much it finds.
 
+### Content-Security-Policy reports
+
+Browsers report the violations of a Content-Security-Policy themselves, to the address the policy names. The package gives the site that address: `POST /beacon/csp`, without CSRF or session. It answers at once with a `204`, leaves out what browser extensions cause and pages that are not of the site, takes out query strings and anything that looks like a token, counts the same violation on the same page instead of sending it every time, and sends the rest on to the dashboard after the response, from the server, the same way as an exception.
+
+Point the policy at it with the helper, which is `null` where nothing would be sent:
+
+```php
+use NickDeKruijk\Beacon\Beacon;
+
+if ($endpoint = Beacon::cspReportUri()) {
+    $response->headers->set('Reporting-Endpoints', 'csp-endpoint="'.$endpoint.'"');
+    $policy .= '; report-uri '.$endpoint.'; report-to csp-endpoint';
+}
+```
+
+Both `report-uri` and `report-to`: Safari only knows the first, Chrome prefers the second. With `BEACON_CSP=false` the route stays but sends nothing.
+
 ## Configuration
 
 Everything works through `.env`. Publish the config file only if you want to change the environments or the limits:
@@ -78,6 +95,7 @@ php artisan vendor:publish --tag=beacon-config
 | `BEACON_SLOW_QUERY_MS` | `200` | A query is slow from this many milliseconds. |
 | `BEACON_QUERY_REPEATS` | `5` | A query is repeated from this many runs in one request or job. |
 | `BEACON_QUERY_REPEATS_MS` | `50` | A repeated query is reported from this many milliseconds for all its runs together. |
+| `BEACON_CSP` | `true` | Send on the CSP reports browsers post to `/beacon/csp`. |
 
 ## Your own dashboard
 

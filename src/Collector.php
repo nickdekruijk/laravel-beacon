@@ -131,6 +131,24 @@ class Collector
     }
 
     /**
+     * The report of a violation of the Content-Security-Policy, as CspReports made it out of what
+     * a browser posted: already scrubbed, with how often it was seen since it was last sent.
+     *
+     * @param  array{directive: string, blocked_uri: ?string, document_uri: ?string, referrer: ?string, disposition: string, source_file: ?string, line: ?int, column: ?int, sample: ?string, status_code: ?int}  $violation
+     * @return array<string, mixed>
+     */
+    public function csp(array $violation, int $count, ?string $userAgent): array
+    {
+        return [
+            'v' => self::VERSION,
+            'type' => 'csp',
+            'occurred_at' => date(DATE_ATOM),
+            'site' => $this->site(),
+            'csp' => [...$violation, 'count' => $count, 'user_agent' => $userAgent === '' ? null : $userAgent],
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function context(string $type, ?Request $request): array
